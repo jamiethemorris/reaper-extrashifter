@@ -1,9 +1,45 @@
 # reaper-extrashifter
 
-Source-only example of REAPER's **undocumented reserved ExtraShifter loading
-hook**, with a bounded **unity-only** C++ provider and synthetic loader tests.
+A **working, source-only REAPER ExtraShifter adapter example**, with interface
+declarations, a bounded **unity-only** C++ provider and synthetic loader tests.
+The **undocumented reserved ExtraShifter loading hook** has been exercised in
+REAPER, and a separate Logic Polyphonic adapter has produced actual offline item
+renders through the same hook—not just library recognition or synthetic tests.
+
+This repository owns the **generic provider interface and unity example**, not a
+time-stretch engine. Logic-specific engine wrappers and integration belong to
+[FlexTimeREA](https://github.com/jamiethemorris/FlexTimeREA), a separate project.
+The Polyphonic ExtraShifter source is not included in this repository; the
+working-integration results below describe local research, not a provider you
+can build from this tree. The FlexTimeREA repository has its own published
+source scope and build instructions.
+
 This is not a supported public provider SDK, arbitrary engine registration API,
-or a completed Logic/Polyphonic integration.
+or a production-ready realtime plug-in.
+
+## Working integration status
+
+On macOS ARM64 with REAPER **7.84** and separately installed Logic Pro **12.4**,
+the separate bounded Polyphonic adapter completed **23 actual offline item
+renders**: 21 nonunity outputs matched independently configured native-engine
+output sample-for-sample; two unity outputs matched input, with REAPER bypassing
+the provider. Sampled coverage included mono/stereo, 44.1/48 kHz, fixed duration
+ratios, source-offset crops, same-object reset/seek, repeated settings and
+save/reopen. Representative actual Logic exports also matched exactly; this is
+not a blanket equivalence claim.
+
+That adapter buffers the complete source before processing, with a tested domain
+of sources up to 30 seconds and fixed duration multipliers 0.5–2. It is **not
+realtime-safe**, retains private analysis WAVs, and has no established concurrent
+processing guarantee. **Unsupported requests can crash REAPER**: the inspected
+host consumer does not reliably handle a null input reservation. Eleven strict
+silence diagnostics remain failed measurements, including native onset/tail/
+channel behavior; successful integration does not erase those limitations.
+
+These are completed historical integration results, not fresh DAW tests run by
+this repository's build script. No vendor libraries, private audio, copied apps
+or raw investigation traces are distributed. The generic example below remains
+unity-only; it does not acquire Polyphonic processing simply by being installed.
 
 ## What the hook is (and is not)
 
@@ -81,12 +117,14 @@ processes, **not sandbox acceptance tests or real-host render tests**.
   processing threads have stopped/joined. It must not race writes. No audio,
   pointers or user identity are logged; event sequence is not wall-clock timing.
 
-To use a real engine later, preserve the published class order/ABI and explicit
-ownership contract; replace the unity behavior only after tests establish its
-latency, input-demand, EOF/flush, reset, reconfiguration and error policies.
-This tree deliberately does not add that integration.
+When connecting another engine, preserve the published class order/ABI and
+explicit ownership contract; replace the unity behavior only after tests
+establish its latency, input-demand, EOF/flush, reset, reconfiguration and error
+policies. The separate Polyphonic integration demonstrates actual offline engine
+use, but its whole-source contract is not a universal provider requirement and
+its Logic-specific implementation is deliberately outside this tree.
 
-## Host observations and controlled validation workflow
+## Unity-example host observations and controlled validation workflow
 
 A prior controlled test on the investigated macOS arm64 host exercised its real
 consumer wrapper directly through reserved mode 12: **143 mono frames at 48 kHz**
